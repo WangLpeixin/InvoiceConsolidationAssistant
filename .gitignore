@@ -1,0 +1,15 @@
+.env
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+data/downloaded.json
+# 发票池是个人财务文件，只保留目录占位
+2026年发票/**
+!2026年发票/.gitkeep
+.DS_Store
+Thumbs.db

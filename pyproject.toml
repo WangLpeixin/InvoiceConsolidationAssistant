@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "invoice"
+version = "0.1.0"
+description = "从 QQ 邮箱下载发票并按金额凑单"
+requires-python = ">=3.10"
+dependencies = [
+    "pypdf",
+    "python-dotenv",
+]
+
+[project.scripts]
+invoice = "invoice.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
