@@ -10,6 +10,7 @@
 python -m venv .venv
 .venv\Scripts\activate
 pip install -e .
+python -m playwright install chromium
 ```
 
 ## 配置 QQ IMAP
@@ -25,13 +26,20 @@ QQ_AUTH_CODE=你的授权码
 
 不要把 `.env` 提交到 git，也不要在聊天里发送授权码。
 
-发票邮件请留在**收件箱**。只下载 `.pdf` 附件，不处理 OFD。默认只拉取 **2026-06-17 及之后**（含当天）的邮件；更早的票不自动拉取，可用 `--since` 覆盖。
+发票邮件请留在**收件箱**。会下载 PDF 附件，以及邮件里的下载链接 / 二维码指向的 PDF；普通 HTTP 拿不到时会用无头浏览器点「下载」。不处理 OFD，不自动过登录或验证码。默认只拉取 **2026-06-17 及之后**（含当天）的邮件；更早的票不自动拉取，可用 `--since` 覆盖。
 
 ## 命令
 
 ```bash
 # 下载 2026-06-17 起（含当天）的收件箱 PDF；更早的票不自动拉取
 python -m invoice download
+
+# 重扫已记录过的邮件（补链接/二维码发票，已入库文件按哈希跳过）
+python -m invoice download --rescan
+
+# 核对哪些发票邮件没纳入（只读，不下载）
+python -m invoice audit
+python -m invoice audit --out data/missed.csv
 
 # 预览凑单（不移动）
 python -m invoice pack --amount 200 --folder 出差报销 --dry-run

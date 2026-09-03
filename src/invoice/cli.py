@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 
 from invoice import pool_dir, project_root
 from invoice.amount import yuan_to_fen
+from invoice.audit import audit_inbox, format_audit_report, write_audit_csv
 from invoice.download import DEFAULT_SINCE, download_invoices, format_download_stats
 from invoice.pack import format_pack_report, pack_invoices, resolve_dest_dir
 
@@ -41,6 +42,11 @@ def main(argv: list[str] | None = None) -> int:
         default=DEFAULT_SINCE.isoformat(),
         help="起始日期 YYYY-MM-DD，默认 2026-06-17",
     )
+    download_parser.add_argument(
+        "--rescan",
+        action="store_true",
+        help="忽略已记录的 Message-ID，重扫邮件（仍按文件哈希去重）",
+    )
 
     pack_parser = sub.add_parser("pack", help="按目标金额从发票池凑单并移动")
     pack_parser.add_argument("--amount", required=True, help="目标金额（元），例如 200 或 50.5")
@@ -51,20 +57,46 @@ def main(argv: list[str] | None = None) -> int:
         help="只打印方案，不移动文件",
     )
 
+    audit_parser = sub.add_parser("audit", help="列出未纳入的发票邮件")
+    audit_parser.add_argument(
+        "--since",
+        default=DEFAULT_SINCE.isoformat(),
+        help="起始日期 YYYY-MM-DD，默认 2026-06-17",
+    )
+    audit_parser.add_argument(
+        "--out",
+        help="把未纳入清单导出为 CSV",
+    )
+
     args = parser.parse_args(argv)
     try:
         if args.command == "download":
-            return _cmd_download(root, args.since)
+            return _cmd_download(root, args.since, args.rescan)
+        if args.command == "audit":
+            return _cmd_audit(root, args.since, args.out)
         return _cmd_pack(root, args.amount, args.folder, args.dry_run)
     except (RuntimeError, ValueError) as exc:
         print(str(exc), file=sys.stderr)
         return 1
 
 
-def _cmd_download(root: Path, since_text: str) -> int:
+def _cmd_download(root: Path, since_text: str, rescan: bool) -> int:
     since = _parse_date(since_text)
-    stats = download_invoices(root=root, since=since)
+    stats = download_invoices(root=root, since=since, rescan=rescan)
     print(format_download_stats(stats))
+    return 0
+
+
+def _cmd_audit(root: Path, since_text: str, out: str | None) -> int:
+    since = _parse_date(since_text)
+    report = audit_inbox(root=root, since=since)
+    print(format_audit_report(report))
+    if out:
+        dest = Path(out)
+        if not dest.is_absolute():
+            dest = root / dest
+        write_audit_csv(report.missed, dest)
+        print(f"\n已导出：{dest}")
     return 0
 
 

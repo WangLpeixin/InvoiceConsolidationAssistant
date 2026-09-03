@@ -8,6 +8,7 @@ __pycache__/
 dist/
 build/
 data/downloaded.json
+data/*.csv
 # 发票池是个人财务文件，只保留目录占位
 2026年发票/**
 !2026年发票/.gitkeep
